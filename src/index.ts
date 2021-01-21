@@ -2,6 +2,8 @@ import { Keyboard } from "./keyboard";
 
 const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const context = canvas.getContext("2d");
+const ROWS: number = 20;
+const COLUMNS: number = 10;
 const BSIZE: number = 30;
 
 type Tetrimino = Array<Array<number>>;
@@ -14,20 +16,67 @@ interface FallingPiece {
   tiles: Tetrimino;
 }
 const tetriminos: Array<Tetrimino> = [
-  [[1, 1, 1, 1]],
   [
-    [1, 0],
-    [1, 0],
+    [0, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0]
+  ],
+  [
+    [1, 0, 0],
+    [1, 1, 1],
+    [0, 0, 0]
+  ],
+  [
+    [0, 0, 1],
+    [1, 1, 1],
+    [0, 0, 0]
+  ],
+  [
+    [1, 1],
     [1, 1]
+  ],
+  [
+    [0, 1, 1],
+    [1, 1, 0],
+    [0, 0, 0]
+  ],
+  [
+    [1, 1, 0],
+    [0, 1, 1],
+    [0, 0, 0]
+  ],
+  [
+    [0, 1, 0],
+    [1, 1, 1],
+    [0, 0, 0]
   ]
 ];
 
-function drawSquare(x: number, y: number, value: number) {
-  switch (value) {
-    case 0: {
-      context.fillStyle = "grey";
-      break;
+function rotateTetrimino(tetrimino: Tetrimino) {
+  let len = tetrimino.length;
+  let n = tetrimino.length;
+  let out = Array<Array<number>>(len)
+    .fill(undefined)
+    .map((_, i) => Array(len).fill(0));
+  for (let row in tetrimino) {
+    for (let col in tetrimino[row]) {
+      let xp = -1 * Number(row);
+      let yp = Number(col);
+      xp = ((xp % n) + n) % n;
+      yp = ((yp % n) + n) % n;
+
+      out[yp][xp] = tetrimino[col][row];
     }
+  }
+  return out;
+}
+
+function drawSquare(x: number, y: number, value: number) {
+  if (value === 0) {
+    return;
+  }
+  switch (value) {
     case 1: {
       context.fillStyle = "black";
       break;
@@ -55,9 +104,9 @@ class Game {
   keyboard: Keyboard;
 
   constructor() {
-    this.board = Array<Array<number>>(20)
+    this.board = Array<Array<number>>(ROWS)
       .fill(undefined)
-      .map((_, i) => Array(10).fill(0));
+      .map((_, i) => Array(COLUMNS).fill(0));
     this.currentlyFalling = {
       pos: { x: 0, y: 0 },
       tiles: tetriminos[0]
@@ -133,6 +182,8 @@ class Game {
 
   render() {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "grey";
+    context.fillRect(0, 0, COLUMNS * BSIZE, ROWS * BSIZE);
     drawArray({ x: 0, y: 0 }, this.board);
     drawArray(this.currentlyFalling.pos, this.currentlyFalling.tiles);
   }
@@ -158,6 +209,16 @@ class Game {
       },
       ArrowDown: () => {
         this.tick();
+        this.render();
+      },
+      Space: () => {
+        let rotatedMino = {
+          pos: this.currentlyFalling.pos,
+          tiles: rotateTetrimino(this.currentlyFalling.tiles)
+        };
+        if (this.canMove(this.board, rotatedMino, { x: 0, y: 0 })) {
+          this.currentlyFalling = rotatedMino;
+        }
         this.render();
       }
     });
