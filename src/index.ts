@@ -403,16 +403,16 @@ class Game {
         this.render();
       },
       ArrowUp: () => {
+        this.rotateCurrentlyFalling();
+        this.render();
+      },
+      Space: () => {
         while (this.canMove(this.board, this.currentlyFalling, { x: 0, y: 1 })) {
           this.tick();
         }
         this.tick();
         this.render();
       },
-      Space: () => {
-        this.rotateCurrentlyFalling();
-        this.render();
-      }
     });
     this.tick();
     this.render();
