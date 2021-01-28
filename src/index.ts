@@ -140,12 +140,13 @@ class Game {
   linesCleared: number = 0;
   score: number = 0;
   showShadow: boolean = true;
+  level: number = 0;
 
   constructor() {
     this.board = Array<Array<number>>(kRows)
       .fill(undefined)
       .map((_, i) => Array(kColumns).fill(0));
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 1; i++) {
       this.tetriminoQueue.push(makeFallingTetrimino());
     }
     this.getNextTetrimino();
@@ -205,12 +206,13 @@ class Game {
     }
     const kScores = {
       0: 0,
-      1: 100,
-      2: 300,
-      3: 500,
-      4: 800
+      1: 40,
+      2: 100,
+      3: 300,
+      4: 1200
     };
-    this.score += kScores[linesCleared];
+    this.level = Math.floor(this.linesCleared/10);
+    this.score += kScores[linesCleared] * (this.level+1);
     this.linesCleared += linesCleared;
   }
 
@@ -252,7 +254,40 @@ class Game {
     this.timerId = setTimeout(() => {
       this.tick();
       this.render();
-    }, 1000);
+    }, this.computeDropDelayInMs());
+  }
+
+  computeDropDelayInMs() : number {
+    var fps = 0;
+    if (this.level >= 10 && this.level <= 12) {
+      fps = 5;
+    }
+    else if (this.level >= 13 && this.level <= 15) {
+      fps = 4;
+    }
+    else if (this.level >= 16 && this.level <= 18) {
+      fps = 3;
+    }
+    else if (this.level >= 19 && this.level <= 28) {
+      fps = 2;
+    }
+    else if (this.level >= 29) {
+      fps = 1;
+    } else {
+      fps = {
+        0: 48,
+        1: 43,
+        2: 38,
+        3: 33,
+        4: 28,
+        5: 23,
+        6: 18,
+        7: 13,
+        8: 8,
+        9: 6,
+      }[this.level];  
+    }
+    return Math.floor(fps/60*1000);
   }
 
   render() {
@@ -291,6 +326,20 @@ class Game {
     // gContext.strokeRect(left, 0, width, gCanvas.height);
 
     top += 10;
+
+    // Level heading
+    top += 20;
+    gContext.fillStyle = "grey";
+    gContext.font = "12px monospace";
+    gContext.fillText("Level", left, top);
+
+    // Level
+    top += 30;
+    gContext.fillStyle = "white";
+    gContext.font = "32px monospace";
+    gContext.fillText(String(this.level), left, top);
+    top += 10;
+
     // Lines heading
     top += 20;
     gContext.fillStyle = "grey";
@@ -300,7 +349,7 @@ class Game {
     // Score heading
     gContext.fillStyle = "grey";
     gContext.font = "12px monospace";
-    gContext.fillText("Score", left + 100, 30);
+    gContext.fillText("Score", left + 100, top);
 
     // Lines
     top += 20;
